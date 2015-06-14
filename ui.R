@@ -1,0 +1,325 @@
+library('shiny')
+pdata = read.csv("top30.csv")
+city = read.csv("cities.txt")
+
+n <- names(pdata)
+
+parm <- sort(n[
+    n != "Day" & n != "Month" & n!= "Season" & n != "River" & n!= "Year"
+    & n != "Station" & n != "Long" & n != "Lat" & n != "Date"
+    ])
+
+
+year <- sort(as.character(unique(pdata$Year)))
+
+rm(pdata)
+
+shinyUI(navbarPage("pwqmn Data Explorer",
+    
+    tabPanel("Single Parameter",
+    
+        #titlePanel(h3("Provincial Water Quality Monitoring Network Data Explorer")),
+        fluidRow(
+            
+            sidebarLayout(
+                sidebarPanel(h3("Histogram and summary statistics"),
+
+                    fluidRow(
+
+                        column(7,
+                            selectInput("param", label = h5("Select water quality parameter"),
+                            choices = parm,selected="PPUT"),
+                        
+                             helpText(textOutput("descr")),
+                        
+                            selectInput("city", label = h5("Select city of interest"),
+                                choices = sort(as.character(city$City)),selected="Ottawa"),
+                                
+                            sliderInput("dist", label = h5("Select distance from city center for station inclusion"),
+                                min = 5, max = 50, value = 25),
+                                
+                            selectInput("years", label = h5("Select years to include"),
+                                choices = c("all years",year),selected="all years")
+                        ),                 
+                       
+
+                        column(4,
+                             checkboxGroupInput("river", label = h5("Select rivers to include"),
+                             c("All rivers"),selected="All rivers")
+                        )  
+                 
+                    
+                    ),
+                    
+                    fluidRow( 
+                        h4("Histogram appearance"),
+                        column(7,
+                            sliderInput("bin", label = h5("Bin scale"),
+                            min = 1, max = 150, value = 50)
+                        ),
+                        column(4,
+                            radioButtons("colour",label = h5("Colour by"),
+                                choices = list("Station", "Season","River"),
+                                selected = "River")
+                         )
+            )),
+            
+           
+            mainPanel(
+                tabsetPanel(type = "tabs",
+                    tabPanel("Plot", 
+                        column(12,
+                        h4(textOutput("title1")),
+                        plotOutput("plot1")
+                        )
+                        
+                        ),
+                    tabPanel("Summary",
+                        verbatimTextOutput("summary1")
+
+                        )
+                    )
+            )
+        )  
+    ),
+    
+    fluidRow(
+        sidebarLayout(
+            sidebarPanel(h3("Boxplots and multiple comparisons"),
+               
+              fluidRow(
+                column(4,
+                    radioButtons("compare", label = h4("Factor"),
+                        choices = list("Station", "Season", "River", "Month", "Year"),
+                        selected = "Station")
+                ),
+                column(4,           
+                    radioButtons("log",label = h4("Boxplot scale"),
+                        choices = list("Regular" = "reg", "Log scale" = "log"),
+                        selected = "reg") 
+                 )
+             )),
+            
+
+            
+            mainPanel(
+                tabsetPanel(type = "tabs",
+                    tabPanel("Plot",
+                        column(11,
+                            h4(textOutput("title2")),
+                            plotOutput("plot2")
+                        )
+                    ),
+                    tabPanel("Summary",
+                        verbatimTextOutput("summary2")       
+                    )
+                )
+            )
+        ) 
+    )
+    ),
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    #stats on multiple parameters    
+    tabPanel("Multi-parameter",
+    
+        fluidRow(
+            
+            sidebarLayout(
+                sidebarPanel(h3("Two parameter bi-plot and correlation"),
+
+                    fluidRow(
+
+                        column(7,
+                            selectInput("param_1", label = h5("Parameter"),
+                                choices = parm,selected="PPUT"),
+                        
+                             helpText(textOutput("descr_1")),
+                             
+                             selectInput("param_2", label = h5("Parameter"),
+                                choices = parm,selected="PPO4FR"),
+                        
+                             helpText(textOutput("descr_2")),
+                        
+                            selectInput("city_2", label = h5("Cities"),
+                                choices = sort(as.character(city$City)),selected="Ottawa"),
+                                
+                            sliderInput("dist_2", label = h5("Radial distance, km"),
+                                min = 5, max = 50, value = 15),
+                                
+                            selectInput("years_2", label = h5("Year"),
+                                choices = c("all years",year),selected="all years")
+                        ),                 
+                       
+
+                        column(4,
+                             checkboxGroupInput("river_2", label = h5("River"),
+                                c("All rivers"),selected="all rivers"),
+                        
+                            radioButtons("colour_2",label = h5("Colour by"),
+                                choices = list("Station", "Season","River","None"),
+                                selected = "River"),
+                            
+                            
+                            radioButtons("cor_1",label = h5("Linear regression"),
+                                choices = list("all data"="all", "grouped data"="group"),
+                                selected = "group"),
+                                
+                                
+                            h5("Scale axes"), 
+                            checkboxInput("log_x",label ="log x",
+                                value = F),
+                            checkboxInput("log_y",label ="log y",
+                                value = F) 
+                          
+                         
+                        )  
+                 
+                    
+                    )
+                    
+            ),
+            
+           
+            mainPanel(
+                tabsetPanel(type = "tabs",
+                    tabPanel("Plot", 
+                        column(12,
+                        h4(textOutput("title_2")),
+                        plotOutput("plot_2")
+                        )
+                        
+                        ),
+                    tabPanel("Summary",
+                        verbatimTextOutput("summary_2"),
+                        textOutput("summary_3")
+                        )
+                    )
+            )
+        )  
+    ),
+    
+    fluidRow(
+        sidebarLayout(
+            sidebarPanel(h3("Principal Components analysis"),
+               
+              fluidRow(
+
+                        column(7,
+                            checkboxGroupInput("parm_list", label = h5("Select Parameters"),
+                                parm)
+                          #  selectInput("param_3", label = h5("Parameter"),
+                          #      choices = parm,selected="PPUT"),
+                        
+                          #   helpText(textOutput("descr_3")),
+                        
+                          #  selectInput("city_2", label = h5("Cities"),
+                          #      choices = sort(as.character(city$City)),selected="Ottawa"),
+                                
+                          #  sliderInput("dist_2", label = h5("Radial distance, km"),
+                          #      min = 5, max = 50, value = 25),
+                                
+                           # selectInput("years_2", label = h5("Year"),
+                           #     choices = c("all years",year),selected="all years")
+                        ),                 
+                       
+
+                        column(4,
+
+                            checkboxGroupInput("other_list", label = h5("Other factors"),
+                                c("Year","Season","Month","Latitude"="Lat","River"))
+                                
+                                
+                            #radioButtons("colour_2",label = h5("Colour by"),
+                            #    choices = list("Station", "Season","River"),
+                            #    selected = "River"),
+                            #   
+                            #h5("Scale axes"), 
+                            #checkboxInput("log_x",label ="log x",
+                            #    value = F),
+                            #checkboxInput("log_y",label ="log y",
+                            #    value = F) 
+                          
+                         
+                        )  
+                 
+                    
+                    )
+              
+              
+              
+              
+              
+              
+              ),
+
+            
+            mainPanel(
+                tabsetPanel(type = "tabs",
+                    tabPanel("Plot",
+                        column(11,
+                            h4(textOutput("title_3")),
+                            plotOutput("plot_3")
+                        )
+                    ),
+                    tabPanel("Summary"
+                    
+                    
+                    
+                    )
+                )
+            )
+            
+            
+        ) 
+    )
+    
+    
+    
+    
+    ),
+    tabPanel("About",
+        fluidRow(
+            column(2),
+            column(2,
+                 h3("Application Author"),
+                 br()
+            ),
+            column(8,
+                br(),
+                h4("Jennifer L.A. Hood, Ph.D."),
+                h5(a("View my profile on linkedin",href = "https://ca.linkedin.com/pub/jennifer-hood/2a/653/4b6")),
+                h5("Contact me at: jlahood.at.uwaterloo.ca or jenniferlhood.at.cmail.carleton.ca")
+            )
+        ),
+      
+        fluidRow(
+           column(2),
+           column(2,
+                 h3("PWQMN")
+           ),
+            column(5,
+                 br(),
+                 h4("Provincial Water Quality Monitoring Data"),
+                 h5("The Provincial Water Quality Monitoring Network (PWQMN) dataset is generated and administered by the Ontario  Ministry of Environment (MOE; Ontario Ministry of Environment and Climate Change) through a network MOE scientists and the 36 Ontario Conservation authorities of Ontario. It is publicly available online and governed by an open licence agreement."), 
+                a("PWQMN source data", href = "http://www.ontario.ca/data/provincial-stream-water-quality-monitoring-network"), 
+                br(), a("Ontario open licence agreement", href = "http://www.ontario.ca/government/open-government-licence-ontario"),
+                br(),h5("The MOE have a mandate to monitor and publish data relevant to the determination of many aspects of water quality, river and stream ecosystem status, and the general status of all Ontario ecosystems. The PWQMN dataset currently contains roughly 100 chemical, biological and physical parameters measured on over 2000 stations on across 800 ivers and streams throughout Ontario, and has data record beginning in the mid 1960s, though only data since 2000 is available to the public via the MOE website. The PWQMN dataset covers a much larger spatial and temporal scale, and includes many more parameters than a typical environmental study. Thus, it offers opportunities for data mining and exploration to discover patterns that may not have been previously realized or too small to otherwise detect. It is my hope that this tool can assist scientists and researchers in both public and private sectors to better understand or protect surface water environments."),
+                br(),h5("The PWQMN data has been cleaned and reorganized using a utility and data data structures I created in python. The source code for this project, along with the code used for data wrangling can be found at my github account:"),
+                 a("Jennifer's github", href = "https://github.com/jenniferlhood"),
+                br(),h5("If you have any comments or suggestions, or if there is functionality that you would like to see included in this application, please get in contact me at any of the email address provided."), br(),h4("Last updated: June 2015")
+
+           )
+        )
+    )
+    
+    
+))
